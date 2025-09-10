@@ -1,6 +1,6 @@
 from fastapi import HTTPException, Header
 import jwt , os
-from d_2 import user_collection
+from database import user_collection
 
 JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")

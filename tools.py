@@ -4,7 +4,7 @@ from typing import List
 from fastapi import HTTPException
 from pymongo.cursor import Cursor
 from bson.objectid import ObjectId
-from d_2 import wallet_collection
+from database import wallet_collection
 
 async def check_is_valid_objectId(id):
     try:

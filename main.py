@@ -2,7 +2,7 @@ from typing import Optional
 from fastapi import FastAPI, Depends
 from datetime import datetime
 from d_1 import *
-from d_2 import *
+from database import *
 
 router = FastAPI()
 
