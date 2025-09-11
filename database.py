@@ -1,7 +1,7 @@
+# database.py - UPDATED (using Motor for async)
 import os
-
 from dotenv import load_dotenv
-from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
 
 # Load environment variables
 load_dotenv()
@@ -11,13 +11,13 @@ MONGO_INITDB_ROOT_USERNAME = os.getenv("MONGO_INITDB_ROOT_USERNAME")
 MONGO_INITDB_ROOT_PASSWORD = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
 MONGO_HOST = os.getenv("MONGO_HOST")
 
-client = MongoClient(
+# Create async MongoDB client
+client = AsyncIOMotorClient(
     host=MONGO_HOST,
     port=27017,
     username=MONGO_INITDB_ROOT_USERNAME,
     password=MONGO_INITDB_ROOT_PASSWORD,
 )
-
 
 db = client[MONGO_INITDB_DATABASE]
 user_collection = db["users_affiliate3"]

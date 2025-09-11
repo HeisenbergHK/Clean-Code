@@ -2,7 +2,6 @@ DEFAULT_PAGE_SIZE = 3
 import datetime
 from typing import List
 from fastapi import HTTPException
-from pymongo.cursor import Cursor
 from bson.objectid import ObjectId
 from database import wallet_collection
 
@@ -27,8 +26,9 @@ async def create_paginate_response(page, collection, match, add_wallet=False):
 async def paginate_results(page, collection, match, add_wallet=False):
     total_docs = 0
     if page is None:
+        # FIXED: Use async cursor with to_list()
         cursor = collection.find(match)
-        result = list(cursor)
+        result = await cursor.to_list(length=None)  # CHANGED: list(cursor) -> await cursor.to_list(length=None)
         for index, doc in enumerate(result):
             doc["_id"] = str(doc["_id"])
             if "affiliate_tracking_id" in doc:
@@ -36,8 +36,6 @@ async def paginate_results(page, collection, match, add_wallet=False):
                     doc["affiliate_tracking_id"])
             if "user_id" in doc:
                 doc["user_id"] = str(doc["user_id"])
-
-            # doc = await convert_messages_id_str(doc)
 
             if add_wallet:
                 available_balance, pending_balance = await check_available_balance(
@@ -48,7 +46,8 @@ async def paginate_results(page, collection, match, add_wallet=False):
 
             result[index] = await convert_dict_camel_case(doc)
     else:
-        total_docs = collection.count_documents(match)
+        # FIXED: Use async count_documents
+        total_docs = await collection.count_documents(match)  # CHANGED: Added await
         if page < 1:
             page = 1
 
@@ -63,21 +62,22 @@ async def paginate_results(page, collection, match, add_wallet=False):
 async def check_available_balance(user_id):
     user_id = await check_is_valid_objectId(user_id)
 
-    wallet = wallet_collection.find_one({"user_id": user_id})
+    # FIXED: Use async find_one
+    wallet = await wallet_collection.find_one({"user_id": user_id})  # CHANGED: Added await
 
     # Calculate the available and pending balance
     available_balance = wallet['available_balance']
     pending_balance = 0
     transactions_to_delete = []
     for transaction in wallet["transactions"]:
-        if transaction["date_available"] <= datetime.now():
+        if transaction["date_available"] <= datetime.datetime.now():  # FIXED: Use datetime.datetime
             available_balance += transaction["amount"]
             transactions_to_delete.append(transaction["id"])
         else:
             pending_balance += transaction["amount"]
 
-    # Update the wallet with the new balances
-    wallet_collection.update_one(
+    # FIXED: Use async update_one
+    await wallet_collection.update_one(  # CHANGED: Added await
         {"user_id": user_id},
         {
             "$set": {
@@ -91,14 +91,9 @@ async def check_available_balance(user_id):
     )
     return available_balance, pending_balance
 
-
-
-
 async def snake_to_camel(snake_str):
     components = snake_str.split("_")
     return components[0] + "".join(x.title() for x in components[1:])
-
-
 
 async def convert_dict_camel_case(data):
     camel_dict = {}
@@ -107,12 +102,11 @@ async def convert_dict_camel_case(data):
         camel_dict[camel_key] = value
     return camel_dict
 
-
-async def paginate_documents(
-    cursor: Cursor, skip: int = 0, limit: int = 10, add_wallet=False
-) -> List[dict]:
-    cursor.skip(skip).limit(limit)
-    result = [doc for doc in cursor]
+async def paginate_documents(cursor, skip: int = 0, limit: int = 10, add_wallet=False) -> List[dict]:
+    # FIXED: Use async cursor methods
+    cursor = cursor.skip(skip).limit(limit)
+    result = await cursor.to_list(length=limit)  # CHANGED: [doc for doc in cursor] -> await cursor.to_list(length=limit)
+    
     for index, doc in enumerate(result):
         _id = doc["_id"]
         doc["_id"] = str(doc["_id"])
@@ -121,13 +115,11 @@ async def paginate_documents(
         if "user_id" in doc:
             doc["user_id"] = str(doc["user_id"])
 
-        # doc = await convert_messages_id_str(doc)
         doc = await convert_dict_camel_case(doc)
         if add_wallet:
             print(add_wallet)
             available_balance, pending_balance = await check_available_balance(_id)
             doc["availableBalance"] = available_balance
             doc["pendingBalance"] = pending_balance
-            # print(doc)
         result[index] = doc
     return result
