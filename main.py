@@ -1,8 +1,8 @@
 from typing import Optional
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Header
 from datetime import datetime
-from d_1 import *
-from database import *
+from JWT_authentication import check_user_is_admin, get_status_list_from_query
+from database import *  #TODO
 
 router = FastAPI()
 
