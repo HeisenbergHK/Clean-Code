@@ -1,15 +1,19 @@
 DEFAULT_PAGE_SIZE = 3
 import datetime
 from typing import List
-from fastapi import HTTPException
+
 from bson.objectid import ObjectId
-from database import wallet_collection
+from fastapi import HTTPException
+
+from app.database import wallet_collection
+
 
 async def check_is_valid_objectId(id):
     try:
         return ObjectId(id)
     except:
         raise HTTPException(detail="not valid object id", status_code=400)
+
 
 async def create_paginate_response(page, collection, match, add_wallet=False):
     page, total_docs, result = await paginate_results(
@@ -23,17 +27,19 @@ async def create_paginate_response(page, collection, match, add_wallet=False):
         "results": result,
     }
 
+
 async def paginate_results(page, collection, match, add_wallet=False):
     total_docs = 0
     if page is None:
         # FIXED: Use async cursor with to_list()
         cursor = collection.find(match)
-        result = await cursor.to_list(length=None)  # CHANGED: list(cursor) -> await cursor.to_list(length=None)
+        result = await cursor.to_list(
+            length=None
+        )  # CHANGED: list(cursor) -> await cursor.to_list(length=None)
         for index, doc in enumerate(result):
             doc["_id"] = str(doc["_id"])
             if "affiliate_tracking_id" in doc:
-                doc["affiliate_tracking_id"] = str(
-                    doc["affiliate_tracking_id"])
+                doc["affiliate_tracking_id"] = str(doc["affiliate_tracking_id"])
             if "user_id" in doc:
                 doc["user_id"] = str(doc["user_id"])
 
@@ -63,14 +69,18 @@ async def check_available_balance(user_id):
     user_id = await check_is_valid_objectId(user_id)
 
     # FIXED: Use async find_one
-    wallet = await wallet_collection.find_one({"user_id": user_id})  # CHANGED: Added await
+    wallet = await wallet_collection.find_one(
+        {"user_id": user_id}
+    )  # CHANGED: Added await
 
     # Calculate the available and pending balance
-    available_balance = wallet['available_balance']
+    available_balance = wallet["available_balance"]
     pending_balance = 0
     transactions_to_delete = []
     for transaction in wallet["transactions"]:
-        if transaction["date_available"] <= datetime.datetime.now():  # FIXED: Use datetime.datetime
+        if (
+            transaction["date_available"] <= datetime.datetime.now()
+        ):  # FIXED: Use datetime.datetime
             available_balance += transaction["amount"]
             transactions_to_delete.append(transaction["id"])
         else:
@@ -84,16 +94,16 @@ async def check_available_balance(user_id):
                 "available_balance": available_balance,
                 "pending_balance": pending_balance,
             },
-            "$pull": {
-                "transactions": {"id": {"$in": transactions_to_delete}}
-            },
+            "$pull": {"transactions": {"id": {"$in": transactions_to_delete}}},
         },
     )
     return available_balance, pending_balance
 
+
 async def snake_to_camel(snake_str):
     components = snake_str.split("_")
     return components[0] + "".join(x.title() for x in components[1:])
+
 
 async def convert_dict_camel_case(data):
     camel_dict = {}
@@ -102,11 +112,16 @@ async def convert_dict_camel_case(data):
         camel_dict[camel_key] = value
     return camel_dict
 
-async def paginate_documents(cursor, skip: int = 0, limit: int = 10, add_wallet=False) -> List[dict]:
+
+async def paginate_documents(
+    cursor, skip: int = 0, limit: int = 10, add_wallet=False
+) -> List[dict]:
     # FIXED: Use async cursor methods
     cursor = cursor.skip(skip).limit(limit)
-    result = await cursor.to_list(length=limit)  # CHANGED: [doc for doc in cursor] -> await cursor.to_list(length=limit)
-    
+    result = await cursor.to_list(
+        length=limit
+    )  # CHANGED: [doc for doc in cursor] -> await cursor.to_list(length=limit)
+
     for index, doc in enumerate(result):
         _id = doc["_id"]
         doc["_id"] = str(doc["_id"])

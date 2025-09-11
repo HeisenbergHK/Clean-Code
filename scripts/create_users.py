@@ -1,9 +1,10 @@
 import os
 import sys
 import time
+
+import bcrypt
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
-import bcrypt
 
 print("🤖 Starting to add users...")
 
@@ -25,21 +26,25 @@ for attempt in range(max_retries):
             port=27017,
             username=MONGO_USERNAME,
             password=MONGO_PASSWORD,
-            authSource="admin"
+            authSource="admin",
         )
-        
+
         # Test the connection
-        client.admin.command('ping')
+        client.admin.command("ping")
         print("✅ Connected to MongoDB successfully!")
-        
+
         # Get the database and collection
         db = client[MONGO_DB]
-        user_collection = db.users_affiliate3  # CHANGED: from 'users' to 'users_affiliate3'
-        
+        user_collection = (
+            db.users_affiliate3
+        )  # CHANGED: from 'users' to 'users_affiliate3'
+
         break  # Connection successful, break out of retry loop
-        
+
     except ConnectionFailure as e:
-        print(f"⚠️  MongoDB connection failed (attempt {attempt + 1}/{max_retries}): {e}")
+        print(
+            f"⚠️  MongoDB connection failed (attempt {attempt + 1}/{max_retries}): {e}"
+        )
         if attempt < max_retries - 1:
             time.sleep(retry_delay)
         else:

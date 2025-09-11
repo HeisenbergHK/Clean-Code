@@ -20,4 +20,4 @@ EXPOSE 8000
 
 # Use entrypoint script
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["uvicorn", "main:router", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "app.main:router", "--host", "0.0.0.0", "--port", "8000", "--reload"]
