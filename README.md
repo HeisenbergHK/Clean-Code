@@ -88,6 +88,11 @@ The application follows a clean, modular architecture with clear separation of c
 - **python-dotenv**: Environment variable management
 - **Pydantic**: Data validation and settings management
 
+### Testing Framework
+- **pytest**: Modern testing framework with fixtures and async support
+- **pytest-asyncio**: Async test support for FastAPI endpoints
+- **httpx**: HTTP client for integration testing
+
 ## 📁 Project Structure
 
 ```
@@ -101,6 +106,14 @@ Clean Code/
 ├── scripts/                     # Utility scripts
 │   ├── create_users.py         # Database user initialization
 │   └── generate_token.py       # JWT token generation utility
+├── tests/                       # Test suite
+│   ├── __init__.py             # Test package initialization
+│   ├── conftest.py             # Test configuration and fixtures
+│   ├── test_jwt_authentication.py  # Authentication tests
+│   ├── test_database.py        # Database connection tests
+│   ├── test_tools.py           # Utility functions tests
+│   ├── test_main.py            # Main application tests
+│   └── test_integration.py     # Integration tests
 ├── temp/                        # Temporary files and legacy code
 │   ├── temp_database.py        # Legacy database implementation
 │   └── temp.txt                # Temporary token storage
@@ -108,6 +121,8 @@ Clean Code/
 ├── Dockerfile                  # Application container definition
 ├── docker-entrypoint.sh       # Container startup script
 ├── requirements.txt            # Python dependencies
+├── pytest.ini                 # Pytest configuration
+├── run_tests.py               # Test runner script
 ├── .env                        # Environment variables
 ├── .gitignore                 # Git ignore patterns
 └── .dockerignore              # Docker ignore patterns
@@ -206,7 +221,7 @@ MONGO_HOST_PORT=27018            # MongoDB external port
 
 1. **Generate Admin Token**
    ```bash
-   python scripts/generate_token.py
+   python3 scripts/generate_token.py
    ```
 
 2. **Use Token in Requests**
@@ -348,6 +363,99 @@ This project has undergone significant evolution, as evidenced by the git histor
 
 ## 🧪 Testing
 
+The project includes a comprehensive test suite with unit tests, integration tests, and fixtures for all major components.
+
+### Test Structure
+
+```
+tests/
+├── conftest.py                 # Test configuration and fixtures
+├── test_jwt_authentication.py  # Authentication and JWT tests
+├── test_database.py            # Database connection tests
+├── test_tools.py               # Utility functions tests
+├── test_main.py                # Main application endpoint tests
+└── test_integration.py         # End-to-end integration tests
+```
+
+### Running Tests
+
+#### Using the Test Runner Script (Recommended)
+```bash
+# Run all tests
+python3 run_tests.py --all
+
+# Run only unit tests
+python3 run_tests.py --unit
+
+# Run only integration tests
+python3 run_tests.py --integration
+
+# Run tests with coverage report
+python3 run_tests.py --coverage
+
+# Run specific test file
+python3 run_tests.py --file test_jwt_authentication.py
+
+# Run tests in verbose mode
+python3 run_tests.py --verbose
+```
+
+#### Using Pytest Directly
+```bash
+# Run all tests
+pytest
+
+# Run specific test files
+pytest tests/test_jwt_authentication.py
+pytest tests/test_database.py
+pytest tests/test_tools.py
+
+# Run tests with coverage
+pytest --cov=app --cov-report=html
+
+# Run tests in verbose mode
+pytest -v
+
+# Run only unit tests
+pytest -m "not integration"
+
+# Run only integration tests
+pytest -m integration
+```
+
+### Test Categories
+
+#### Unit Tests
+- **Authentication Tests**: JWT token validation, user authorization, config management
+- **Database Tests**: Connection handling, collection access, error scenarios
+- **Tools Tests**: Pagination, ObjectId validation, string conversion utilities
+- **Main Tests**: Endpoint logic, query parameter processing, filter application
+
+#### Integration Tests
+- **End-to-End API Tests**: Complete request/response cycles
+- **Authentication Flow**: Token generation to endpoint access
+- **Error Handling**: Invalid tokens, unauthorized access, malformed requests
+- **Health Checks**: OpenAPI documentation accessibility
+
+### Test Fixtures
+
+The test suite includes comprehensive fixtures for:
+- Mock configuration managers
+- Mock database collections
+- Sample user and payout data
+- Authentication services
+- JWT handlers
+
+### Test Coverage
+
+The test suite covers:
+- ✅ **JWT Authentication**: Token validation, user verification, admin checks
+- ✅ **Database Operations**: Connection management, collection access
+- ✅ **Pagination Logic**: Page calculation, result formatting, filtering
+- ✅ **API Endpoints**: Request handling, response formatting, error cases
+- ✅ **Utility Functions**: String conversion, ObjectId validation, balance calculation
+- ✅ **Integration Flows**: Complete authentication and data retrieval workflows
+
 ### Manual Testing
 
 1. **Start the application**
@@ -357,7 +465,7 @@ This project has undergone significant evolution, as evidenced by the git histor
 
 2. **Generate test token**
    ```bash
-   python scripts/generate_token.py
+   python3 scripts/generate_token.py
    ```
 
 3. **Test authentication**
@@ -372,6 +480,26 @@ The application includes automatic user creation for testing:
 - Admin user: `admin@example.com` / `adminpassword123`
 - Regular user: `user@example.com` / `userpassword123`
 
+### Continuous Integration
+
+To set up CI/CD with the test suite:
+
+```yaml
+# Example GitHub Actions workflow
+name: Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - run: pip install -r requirements.txt
+      - run: python3 run_tests.py --coverage
+```
+
 ## 🤝 Contributing
 
 ### Development Workflow
@@ -383,8 +511,19 @@ The application includes automatic user creation for testing:
    ```
 3. **Make your changes**
 4. **Follow the existing code style**
-5. **Add tests if applicable**
-6. **Commit with conventional commits**
+5. **Write tests for new functionality**
+   ```bash
+   # Run tests to ensure nothing is broken
+   python3 run_tests.py --all
+   
+   # Add tests for your new code
+   # Follow existing test patterns in tests/ directory
+   ```
+6. **Ensure all tests pass**
+   ```bash
+   python3 run_tests.py --coverage
+   ```
+7. **Commit with conventional commits**
    ```bash
    git commit -m "feat: add new feature"
    ```
