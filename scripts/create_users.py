@@ -9,7 +9,7 @@ from pymongo.errors import ConnectionFailure
 print("🤖 Starting to add users...")
 
 MONGO_HOST = os.getenv("MONGO_HOST")
-MONGO_PORT = os.getenv("MONGO_HOST_PORT")
+MONGO_PORT = os.getenv("MONGO_PORT")
 MONGO_DB = os.getenv("MONGO_INITDB_DATABASE")
 MONGO_USERNAME = os.getenv("MONGO_INITDB_ROOT_USERNAME")
 MONGO_PASSWORD = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
@@ -36,9 +36,8 @@ for attempt in range(max_retries):
         # Get the database and collection
         db = client[MONGO_DB]
         user_collection = (
-            db.users_affiliate3
-        )  # CHANGED: from 'users' to 'users_affiliate3'
-
+            db.users_affiliate
+        )
         break  # Connection successful, break out of retry loop
 
     except ConnectionFailure as e:
@@ -83,8 +82,8 @@ for user in users_to_add:
     # Insert the user into the database
     result = user_collection.insert_one(user)
     print(
-        f"✅ User {user['email']} added successfully to users_affiliate3! Database ID: {result.inserted_id}"
+        f"✅ User {user['email']} added successfully to users_affiliate! Database ID: {result.inserted_id}"
     )
 
-print("🎉 All done! Users created in users_affiliate3 collection")
+print("🎉 All done! Users created in users_affiliate collection")
 client.close()

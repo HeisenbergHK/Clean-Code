@@ -10,15 +10,10 @@ load_dotenv()
 JWT_SECRET = os.getenv("JWT_SECRET")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
 
-print(f"JWT_SECRET: {JWT_SECRET}")
-
 
 def generate_token(email):
-    expiration = datetime.utcnow() + timedelta(minutes=30)
     token_data = {
-        "sub": email,  # This is the crucial part - must include "sub"
-        "exp": expiration,
-        "iat": datetime.utcnow(),  # issued at time
+        "sub": email,
     }
     token = jwt.encode(token_data, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return token
